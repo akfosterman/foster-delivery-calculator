@@ -9,8 +9,19 @@ export default function DeliveryCalculator() {
   const materials = [
     { name: 'Pit Run Gravel', price: 9.25 },
     { name: '2 Minus', price: 14.00 },
+    { name: '1 Minus', price: 13.00 },
+    { name: 'Small Sewer Rock', price: 18.00 },
+    { name: 'Large Sewer Rock', price: 18.00 },
+    { name: '1 Washed', price: 18.00 },
+    { name: 'Washed Sand', price: 15.00 },
+    { name: 'Pea Gravel', price: 18.00 },
+    { name: 'Crushed Chips', price: 50.00 },
+    { name: 'D1', price: 29.00 },
+    { name: 'Recycled Asphalt Pavement (RAP)', price: 30.00 },
+    { name: 'Screened Topsoil', price: 30.00 },
     { name: 'Fill Dirt', price: 3.00 },
   ];
+    
 
   const handleCalculate = () => {
     if (!material || !yards) {
