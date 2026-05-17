@@ -11,6 +11,7 @@ export default function DeliveryCalculator() {
   const [allAddresses, setAllAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
+  const [loadStatus, setLoadStatus] = useState('');
 
   const materials = [
     { name: 'Pit Run Gravel', price: 9.25 },
@@ -76,32 +77,55 @@ export default function DeliveryCalculator() {
 
   const loadKPBAddresses = async () => {
     setLoadingAddresses(true);
+    setLoadStatus('Connecting to KPB GeoHub...');
+    
     try {
-      const url = 'https://services.arcgis.com/r62b6pXCTNDKVNk0/arcgis/rest/services/KPB_Physical_Addresses/FeatureServer/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=json&resultRecordCount=10000';
-      const response = await fetch(url);
-      const data = await response.json();
+      const baseUrl = 'https://services.arcgis.com/ba4DH9pIcqkXJVfl/arcgis/rest/services/Physical_Addresses_view/FeatureServer/0/query';
+      let allFeatures = [];
+      let offset = 0;
+      const pageSize = 2000;
+      let hasMore = true;
       
-      if (data.features) {
-        const addresses = data.features
-          .map(f => {
-            const num = f.attributes.SITUS_NUM || '';
-            const street = f.attributes.SITUS_STREET || '';
-            const display = (num + ' ' + street).trim();
-            return {
-              display: display,
-              lat: f.geometry.y,
-              lng: f.geometry.x
-            };
-          })
-          .filter(a => a.display)
-          .sort((a, b) => a.display.localeCompare(b.display));
+      while (hasMore) {
+        setLoadStatus(`Loading addresses... ${allFeatures.length} loaded so far`);
+        const url = `${baseUrl}?where=1%3D1&outFields=Address,House_Number,Street_Name&returnGeometry=true&outSR=4326&f=json&resultRecordCount=${pageSize}&resultOffset=${offset}`;
         
-        setAllAddresses(addresses);
-        localStorage.setItem('kpb_addresses', JSON.stringify(addresses));
-        setAddressesLoaded(true);
-        alert('Loaded ' + addresses.length + ' addresses from KPB');
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          allFeatures = allFeatures.concat(data.features);
+          offset += pageSize;
+          if (data.features.length < pageSize) hasMore = false;
+        } else {
+          hasMore = false;
+        }
+        
+        if (allFeatures.length > 50000) hasMore = false;
       }
+      
+      setLoadStatus(`Processing ${allFeatures.length} addresses...`);
+      
+      const addresses = allFeatures
+        .map(f => {
+          const display = (f.attributes.Address || '').trim();
+          return {
+            display: display,
+            lat: f.geometry ? f.geometry.y : null,
+            lng: f.geometry ? f.geometry.x : null
+          };
+        })
+        .filter(a => a.display && a.lat && a.lng)
+        .sort((a, b) => a.display.localeCompare(b.display));
+      
+      setAllAddresses(addresses);
+      localStorage.setItem('kpb_addresses', JSON.stringify(addresses));
+      setAddressesLoaded(true);
+      setLoadStatus('');
+      alert('Successfully loaded ' + addresses.length + ' addresses from KPB!');
     } catch (err) {
+      console.error('Load error:', err);
+      setLoadStatus('Error: ' + err.message);
       alert('Could not load addresses: ' + err.message);
     } finally {
       setLoadingAddresses(false);
@@ -167,7 +191,7 @@ export default function DeliveryCalculator() {
     const zone = findZone(selectedAddress.lat, selectedAddress.lng);
     
     if (!zone) {
-      setResult({ outOfZone: true });
+      setResult({ outOfZone: true, address: selectedAddress.display });
       return;
     }
     
@@ -200,6 +224,7 @@ export default function DeliveryCalculator() {
           <button onClick={loadKPBAddresses} disabled={loadingAddresses} style={{ padding: '8px 16px', backgroundColor: '#d97706', color: 'white', border: 'none', cursor: 'pointer' }}>
             {loadingAddresses ? 'Loading...' : 'Load KPB Addresses'}
           </button>
+          {loadStatus && <p style={{ marginTop: '10px', fontSize: '12px' }}>{loadStatus}</p>}
         </div>
       )}
 
@@ -261,6 +286,7 @@ export default function DeliveryCalculator() {
       {result && result.outOfZone && (
         <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#fee2e2', border: '2px solid #fca5a5' }}>
           <h3>Out of Service Area</h3>
+          <p>Address: {result.address}</p>
           <p>This delivery location requires office review. Please call Foster Construction for pricing.</p>
         </div>
       )}
