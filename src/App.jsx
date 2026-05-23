@@ -30,7 +30,7 @@ export default function DeliveryCalculator() {
     { name: 'Fill Dirt', price: 3.00 },
   ];
 
-  const deliveryFees = { green: 120, yellow: 150, red: 180 };
+  const deliveryFees = { green: 120, yellow: 155, red: 180 };
 
   useEffect(() => {
     loadFromCache();
@@ -218,18 +218,12 @@ export default function DeliveryCalculator() {
       material, 
       yards, 
       numDeliveries,
-      zone, 
+      zone,
+      deliveryPerLoad,
       cost: cost.toFixed(2), 
       delivery: delivery.toFixed(2), 
       total: total.toFixed(2) 
     });
-  };
-
-  const getResultBoxColor = () => {
-    if (!result || result.outOfZone) return { bg: '#fee2e2', border: '#fca5a5' };
-    if (result.zone === 'green') return { bg: '#f0fdf4', border: '#86efac' };
-    if (result.zone === 'yellow') return { bg: '#fef3c7', border: '#fcd34d' };
-    if (result.zone === 'red') return { bg: '#fee2e2', border: '#fca5a5' };
   };
 
   return (
@@ -291,25 +285,20 @@ export default function DeliveryCalculator() {
       </button>
 
       {result && !result.outOfZone && (
-        <div style={{ 
-          marginTop: '30px', 
-          padding: '20px', 
-          backgroundColor: result.zone === 'green' ? '#f0fdf4' : result.zone === 'yellow' ? '#fef3c7' : '#fee2e2',
-          border: `2px solid ${result.zone === 'green' ? '#86efac' : result.zone === 'yellow' ? '#fcd34d' : '#fca5a5'}`
-        }}>
+        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#ffffff', border: '2px solid #cccccc' }}>
           <h3>Your Estimate</h3>
           <p>Address: {result.address}</p>
           <p>Material: {result.material} - {result.yards} yards</p>
           <p>Deliveries: {result.numDeliveries} load(s)</p>
           <p>Zone: <strong>{result.zone.toUpperCase()}</strong></p>
           <p>Material Cost: ${result.cost}</p>
-          <p>Delivery: ${result.delivery} ({result.numDeliveries} loads × ${deliveryFees[result.zone]} per load)</p>
+          <p>Delivery: ${result.delivery} ({result.numDeliveries} loads × ${result.deliveryPerLoad} per load)</p>
           <p style={{ fontWeight: 'bold', fontSize: '18px' }}>TOTAL: ${result.total}</p>
         </div>
       )}
 
       {result && result.outOfZone && (
-        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#fee2e2', border: '2px solid #fca5a5' }}>
+        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#ffffff', border: '2px solid #cccccc' }}>
           <h3>Out of Service Area</h3>
           <p>Address: {result.address}</p>
           <p>This delivery location requires office review. Please call Foster Construction for pricing.</p>
