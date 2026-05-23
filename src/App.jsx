@@ -12,6 +12,7 @@ export default function DeliveryCalculator() {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [loadStatus, setLoadStatus] = useState('');
+  const [zones, setZones] = useState({ greenZones: [], yellowZones: [], redZones: [] });
 
   const materials = [
     { name: 'Pit Run Gravel', price: 9.25 },
@@ -29,38 +30,44 @@ export default function DeliveryCalculator() {
     { name: 'Fill Dirt', price: 3.00 },
   ];
 
-  const zones = {
-    greenZones: [
-      {
-        name: 'College/Big Funny Green',
-        coords: [[-151.06, 60.56], [-151.07, 60.56], [-151.17, 60.57], [-151.17, 60.56], [-151.06, 60.55], [-151.05, 60.56], [-151.03, 60.56], [-151.04, 60.56], [-151.06, 60.56]]
-      },
-      {
-        name: 'Main Green',
-        coords: [[-151.18, 60.45], [-151.20, 60.44], [-151.22, 60.41], [-151.23, 60.40], [-151.22, 60.38], [-151.25, 60.33], [-151.26, 60.32], [-151.24, 60.32], [-151.22, 60.33], [-151.14, 60.41], [-151.16, 60.40], [-151.18, 60.45]]
-      }
-    ],
-    yellowZones: [
-      {
-        name: 'Big Funny Yellow',
-        coords: [[-151.18, 60.45], [-151.20, 60.44], [-151.22, 60.41], [-151.23, 60.40], [-151.22, 60.38], [-151.25, 60.33], [-151.26, 60.32], [-151.24, 60.32], [-151.22, 60.33], [-151.14, 60.41], [-151.16, 60.40], [-151.18, 60.45]]
-      }
-    ],
-    redZones: [
-      {
-        name: 'College Pit Red',
-        coords: [[-151.25, 60.48], [-151.26, 60.49], [-151.30, 60.49], [-151.29, 60.42], [-151.25, 60.48]]
-      },
-      {
-        name: 'Big Funny Red',
-        coords: [[-151.29, 60.31], [-151.30, 60.31], [-151.31, 60.30], [-151.30, 60.29], [-151.29, 60.28], [-151.27, 60.28], [-151.21, 60.32], [-151.26, 60.32], [-151.29, 60.31]]
-      }
-    ]
-  };
-
   useEffect(() => {
     loadFromCache();
+    loadZonesFromGeoJSON();
   }, []);
+
+  const loadZonesFromGeoJSON = async () => {
+    try {
+      const response = await fetch('/data/zones.geojson');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const geoJsonData = await response.json();
+      
+      const greenZones = [];
+      const yellowZones = [];
+      const redZones = [];
+      
+      geoJsonData.features.forEach(feature => {
+        const zone = feature.properties.zone;
+        const name = feature.properties.name || 'Zone';
+        
+        if (feature.geometry && feature.geometry.type === 'Polygon') {
+          const coords = feature.geometry.coordinates[0];
+          const zoneObj = { name, coords };
+          
+          if (zone === 'green') greenZones.push(zoneObj);
+          else if (zone === 'yellow') yellowZones.push(zoneObj);
+          else if (zone === 'red') redZones.push(zoneObj);
+        }
+      });
+      
+      setZones({ greenZones, yellowZones, redZones });
+      console.log('Zones loaded successfully:', { greenZones: greenZones.length, yellowZones: yellowZones.length, redZones: redZones.length });
+    } catch (err) {
+      console.error('Error loading zones from GeoJSON:', err);
+      setZones({ greenZones: [], yellowZones: [], redZones: [] });
+    }
+  };
 
   const loadFromCache = () => {
     const cached = localStorage.getItem('kpb_addresses');
