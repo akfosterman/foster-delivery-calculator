@@ -204,8 +204,11 @@ export default function DeliveryCalculator() {
     
     const mat = materials.find(m => m.name === material);
     const deliveryFees = { green: 125, yellow: 155, red: 185 };
-    const cost = parseFloat(yards) * mat.price;
-    const delivery = deliveryFees[zone];
+    const yardsRequested = parseFloat(yards);
+    const numDeliveries = Math.ceil(yardsRequested / 10);
+    const cost = yardsRequested * mat.price;
+    const deliveryPerLoad = deliveryFees[zone];
+    const delivery = numDeliveries * deliveryPerLoad;
     const total = cost + delivery;
     
     setResult({ 
@@ -213,9 +216,10 @@ export default function DeliveryCalculator() {
       address: selectedAddress.display,
       material, 
       yards, 
+      numDeliveries,
       zone, 
       cost: cost.toFixed(2), 
-      delivery, 
+      delivery: delivery.toFixed(2), 
       total: total.toFixed(2) 
     });
   };
@@ -283,9 +287,10 @@ export default function DeliveryCalculator() {
           <h3>Your Estimate</h3>
           <p>Address: {result.address}</p>
           <p>Material: {result.material} - {result.yards} yards</p>
+          <p>Deliveries: {result.numDeliveries} load(s)</p>
           <p>Zone: {result.zone.toUpperCase()}</p>
           <p>Material Cost: ${result.cost}</p>
-          <p>Delivery: ${result.delivery}</p>
+          <p>Delivery: ${result.delivery} ({result.numDeliveries} × $125-$185 per zone)</p>
           <p style={{ fontWeight: 'bold', fontSize: '18px' }}>TOTAL: ${result.total}</p>
         </div>
       )}
