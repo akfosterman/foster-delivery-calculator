@@ -166,15 +166,16 @@ export default function DeliveryCalculator() {
   };
 
   const logToSheet = async (data) => {
-    try {
-      await fetch('https://script.google.com/macros/s/AKfycbyBqYvbNIMvLZPQQhoNOEW900HSCLYEnCbkxTi8iEzt1nFJLvYXio4U9xCOsapEbkWX/exec', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-    } catch (err) {
-      console.error('Error logging to sheet:', err);
-    }
-  };
+  try {
+    const alaskaTime = new Date().toLocaleString('en-US', { timeZone: 'America/Anchorage' });
+    await fetch('https://script.google.com/macros/s/AKfycbyBqYvbNIMvLZPQQhoNOEW900HSCLYEnCbkxTi8iEzt1nFJLvYXio4U9xCOsapEbkWX/exec', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, timestamp: alaskaTime })
+    });
+  } catch (err) {
+    console.error('Error logging to sheet:', err);
+  }
+};
 
   const handleAddressChange = (e) => {
     const value = e.target.value;
