@@ -165,6 +165,17 @@ export default function DeliveryCalculator() {
     return null;
   };
 
+  const logToSheet = async (data) => {
+    try {
+      await fetch('https://script.google.com/macros/s/AKfycbyBqYvbNIMvLZPQQhoNOEW900HSCLYEnCbkxTi8iEzt1nFJLvYXio4U9xCOsapEbkWX/exec', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    } catch (err) {
+      console.error('Error logging to sheet:', err);
+    }
+  };
+
   const handleAddressChange = (e) => {
     const value = e.target.value;
     setAddressInput(value);
@@ -201,6 +212,17 @@ export default function DeliveryCalculator() {
     
     if (!zone) {
       setResult({ outOfZone: true, address: selectedAddress.display });
+      logToSheet({
+        address: selectedAddress.display,
+        material: material,
+        yards: yards,
+        numDeliveries: '',
+        zone: 'Out of Zone',
+        cost: '',
+        deliveryPerLoad: '',
+        total: '',
+        officeReviewRequired: 'Yes'
+      });
       return;
     }
     
@@ -223,6 +245,18 @@ export default function DeliveryCalculator() {
       cost: cost.toFixed(2), 
       delivery: delivery.toFixed(2), 
       total: total.toFixed(2) 
+    });
+
+    logToSheet({
+      address: selectedAddress.display,
+      material: material,
+      yards: yards,
+      numDeliveries: numDeliveries,
+      zone: zone,
+      cost: cost.toFixed(2),
+      deliveryPerLoad: deliveryPerLoad,
+      total: total.toFixed(2),
+      officeReviewRequired: 'No'
     });
   };
 
