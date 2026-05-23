@@ -30,6 +30,8 @@ export default function DeliveryCalculator() {
     { name: 'Fill Dirt', price: 3.00 },
   ];
 
+  const deliveryFees = { green: 120, yellow: 150, red: 180 };
+
   useEffect(() => {
     loadFromCache();
     loadZonesFromGeoJSON();
@@ -203,7 +205,6 @@ export default function DeliveryCalculator() {
     }
     
     const mat = materials.find(m => m.name === material);
-    const deliveryFees = { green: 125, yellow: 155, red: 185 };
     const yardsRequested = parseFloat(yards);
     const numDeliveries = Math.ceil(yardsRequested / 10);
     const cost = yardsRequested * mat.price;
@@ -222,6 +223,13 @@ export default function DeliveryCalculator() {
       delivery: delivery.toFixed(2), 
       total: total.toFixed(2) 
     });
+  };
+
+  const getResultBoxColor = () => {
+    if (!result || result.outOfZone) return { bg: '#fee2e2', border: '#fca5a5' };
+    if (result.zone === 'green') return { bg: '#f0fdf4', border: '#86efac' };
+    if (result.zone === 'yellow') return { bg: '#fef3c7', border: '#fcd34d' };
+    if (result.zone === 'red') return { bg: '#fee2e2', border: '#fca5a5' };
   };
 
   return (
@@ -283,14 +291,19 @@ export default function DeliveryCalculator() {
       </button>
 
       {result && !result.outOfZone && (
-        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f0fdf4', border: '2px solid #86efac' }}>
+        <div style={{ 
+          marginTop: '30px', 
+          padding: '20px', 
+          backgroundColor: result.zone === 'green' ? '#f0fdf4' : result.zone === 'yellow' ? '#fef3c7' : '#fee2e2',
+          border: `2px solid ${result.zone === 'green' ? '#86efac' : result.zone === 'yellow' ? '#fcd34d' : '#fca5a5'}`
+        }}>
           <h3>Your Estimate</h3>
           <p>Address: {result.address}</p>
           <p>Material: {result.material} - {result.yards} yards</p>
           <p>Deliveries: {result.numDeliveries} load(s)</p>
-          <p>Zone: {result.zone.toUpperCase()}</p>
+          <p>Zone: <strong>{result.zone.toUpperCase()}</strong></p>
           <p>Material Cost: ${result.cost}</p>
-          <p>Delivery: ${result.delivery} ({result.numDeliveries} × $125-$185 per zone)</p>
+          <p>Delivery: ${result.delivery} ({result.numDeliveries} loads × ${deliveryFees[result.zone]} per load)</p>
           <p style={{ fontWeight: 'bold', fontSize: '18px' }}>TOTAL: ${result.total}</p>
         </div>
       )}
